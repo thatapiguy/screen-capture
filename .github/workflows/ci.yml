@@ -25,4 +25,10 @@ jobs:
       - name: Core tests
         run: swift test --package-path ScreenCapCore
       - name: Build app
-        run: xcodebuild -project ScreenCap.xcodeproj -scheme ScreenCap -configuration Debug -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO -quiet build
+        run: |
+          # Keep the log readable: only diagnostics on failure.
+          if ! xcodebuild -project ScreenCap.xcodeproj -scheme ScreenCap -configuration Debug -destination 'platform=macOS,arch=arm64' CODE_SIGNING_ALLOWED=NO build > build.log 2>&1; then
+            grep -E "(error|warning): " build.log | sort -u
+            exit 1
+          fi
+          grep -E "warning: " build.log | grep -v "xcodebuild: WARNING" | sort -u || true

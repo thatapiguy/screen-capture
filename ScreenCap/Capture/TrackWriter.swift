@@ -122,12 +122,14 @@ final class TrackWriter: @unchecked Sendable {
         ]
     }
 
-    static let audioSettings: [String: Any] = [
-        AVFormatIDKey: kAudioFormatMPEG4AAC,
-        AVSampleRateKey: 48_000,
-        AVNumberOfChannelsKey: 2,
-        AVEncoderBitRateKey: 160_000,
-    ]
+    static var audioSettings: [String: Any] {
+        [
+            AVFormatIDKey: kAudioFormatMPEG4AAC,
+            AVSampleRateKey: 48_000,
+            AVNumberOfChannelsKey: 2,
+            AVEncoderBitRateKey: 160_000,
+        ]
+    }
 }
 
 extension CMSampleBuffer {
