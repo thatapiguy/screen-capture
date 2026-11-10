@@ -1,0 +1,392 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		04CC66CFDDC9483E0FF3BA91 /* Main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1566CB739F4E9FA0615D4888 /* Main.swift */; };
+		10B4E935EBCB0EF2F6E8C60C /* ScreenCapCore in Frameworks */ = {isa = PBXBuildFile; productRef = 04582E11A4C78E8F330BB538 /* ScreenCapCore */; };
+		1B012F6BE8FB8F017AE25AFF /* Permissions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81CB4624EFAD7F5B09AC1697 /* Permissions.swift */; };
+		260DCE3E2246A9C835AA967A /* RecordPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E575BE571A2EA2B11B9C504 /* RecordPanel.swift */; };
+		8D95CDE694E506B21B6BAD8D /* TrackWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B0C83D23171480E4EC54DF /* TrackWriter.swift */; };
+		A49C03869780918D32EC139C /* RegionPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B48B5614D934A23B823F5CB /* RegionPicker.swift */; };
+		CB7D821C882E5680D55973B5 /* Recorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42DC67C5496E68A2AC7FDC7C /* Recorder.swift */; };
+		D566036F69000A86C737FFCD /* CaptureEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 993773E361D68AA3249893EC /* CaptureEngine.swift */; };
+		EB7E567F8CBD859DD690CF16 /* MicEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5C424D2DE7686C9B2E765C3 /* MicEngine.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0BF84DADB53F3FAB6310F24A /* ScreenCapCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ScreenCapCore; path = ScreenCapCore; sourceTree = SOURCE_ROOT; };
+		1566CB739F4E9FA0615D4888 /* Main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Main.swift; sourceTree = "<group>"; };
+		22631AB763671C2280645772 /* ScreenCap.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ScreenCap.entitlements; sourceTree = "<group>"; };
+		42DC67C5496E68A2AC7FDC7C /* Recorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Recorder.swift; sourceTree = "<group>"; };
+		53B0C83D23171480E4EC54DF /* TrackWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackWriter.swift; sourceTree = "<group>"; };
+		5CE0E74292D4BF0B577D51AE /* ScreenCap.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ScreenCap.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5E575BE571A2EA2B11B9C504 /* RecordPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordPanel.swift; sourceTree = "<group>"; };
+		6B48B5614D934A23B823F5CB /* RegionPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionPicker.swift; sourceTree = "<group>"; };
+		81CB4624EFAD7F5B09AC1697 /* Permissions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Permissions.swift; sourceTree = "<group>"; };
+		993773E361D68AA3249893EC /* CaptureEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureEngine.swift; sourceTree = "<group>"; };
+		C7F80E67CA35DB2DB36F6C3E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		D5C424D2DE7686C9B2E765C3 /* MicEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicEngine.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		7C9AB91E6B8E4F6BF320064B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				10B4E935EBCB0EF2F6E8C60C /* ScreenCapCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		16BFE43458F7A5C67AADB468 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5CE0E74292D4BF0B577D51AE /* ScreenCap.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		2068873F076FE50B5F90F419 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				1566CB739F4E9FA0615D4888 /* Main.swift */,
+				81CB4624EFAD7F5B09AC1697 /* Permissions.swift */,
+				5E575BE571A2EA2B11B9C504 /* RecordPanel.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		47195F990ADF0CF78A5FCBAA = {
+			isa = PBXGroup;
+			children = (
+				C54345BC4D19A7EA8C5ECFDC /* Packages */,
+				C36AEBB36D03FF3651B05AA5 /* ScreenCap */,
+				16BFE43458F7A5C67AADB468 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		8AB52A9F2348DFAF1BA49945 /* Capture */ = {
+			isa = PBXGroup;
+			children = (
+				993773E361D68AA3249893EC /* CaptureEngine.swift */,
+				D5C424D2DE7686C9B2E765C3 /* MicEngine.swift */,
+				42DC67C5496E68A2AC7FDC7C /* Recorder.swift */,
+				53B0C83D23171480E4EC54DF /* TrackWriter.swift */,
+			);
+			path = Capture;
+			sourceTree = "<group>";
+		};
+		B335C06F89CC4B889B9A4B03 /* Overlays */ = {
+			isa = PBXGroup;
+			children = (
+				6B48B5614D934A23B823F5CB /* RegionPicker.swift */,
+			);
+			path = Overlays;
+			sourceTree = "<group>";
+		};
+		C36AEBB36D03FF3651B05AA5 /* ScreenCap */ = {
+			isa = PBXGroup;
+			children = (
+				C7F80E67CA35DB2DB36F6C3E /* Info.plist */,
+				22631AB763671C2280645772 /* ScreenCap.entitlements */,
+				2068873F076FE50B5F90F419 /* App */,
+				8AB52A9F2348DFAF1BA49945 /* Capture */,
+				B335C06F89CC4B889B9A4B03 /* Overlays */,
+			);
+			path = ScreenCap;
+			sourceTree = "<group>";
+		};
+		C54345BC4D19A7EA8C5ECFDC /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				0BF84DADB53F3FAB6310F24A /* ScreenCapCore */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		7EE71E71D674F2F574CA29B0 /* ScreenCap */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D07BC1B87CD91B8324D060F4 /* Build configuration list for PBXNativeTarget "ScreenCap" */;
+			buildPhases = (
+				F93762C2FE465222D04F67E0 /* Sources */,
+				7C9AB91E6B8E4F6BF320064B /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ScreenCap;
+			packageProductDependencies = (
+				04582E11A4C78E8F330BB538 /* ScreenCapCore */,
+			);
+			productName = ScreenCap;
+			productReference = 5CE0E74292D4BF0B577D51AE /* ScreenCap.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		6026F393F29AC2C07BAADF10 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					7EE71E71D674F2F574CA29B0 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = B5B1A44BBA0D7D40FDC78281 /* Build configuration list for PBXProject "ScreenCap" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 47195F990ADF0CF78A5FCBAA;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				A936689FB77E40FF03B4F9BB /* XCLocalSwiftPackageReference "ScreenCapCore" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 16BFE43458F7A5C67AADB468 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				7EE71E71D674F2F574CA29B0 /* ScreenCap */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		F93762C2FE465222D04F67E0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D566036F69000A86C737FFCD /* CaptureEngine.swift in Sources */,
+				04CC66CFDDC9483E0FF3BA91 /* Main.swift in Sources */,
+				EB7E567F8CBD859DD690CF16 /* MicEngine.swift in Sources */,
+				1B012F6BE8FB8F017AE25AFF /* Permissions.swift in Sources */,
+				260DCE3E2246A9C835AA967A /* RecordPanel.swift in Sources */,
+				CB7D821C882E5680D55973B5 /* Recorder.swift in Sources */,
+				A49C03869780918D32EC139C /* RegionPicker.swift in Sources */,
+				8D95CDE694E506B21B6BAD8D /* TrackWriter.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		23F95285DC2A95FFCCD79D50 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		2C67D42045BC97C11AFBDEE8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = ScreenCap/ScreenCap.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ScreenCap/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.thatapiguy.ScreenCap;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		4D89454639C14A01AF1BFECF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		CEE93C42A25D306F411AB59A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = ScreenCap/ScreenCap.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ScreenCap/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.thatapiguy.ScreenCap;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		B5B1A44BBA0D7D40FDC78281 /* Build configuration list for PBXProject "ScreenCap" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4D89454639C14A01AF1BFECF /* Debug */,
+				23F95285DC2A95FFCCD79D50 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		D07BC1B87CD91B8324D060F4 /* Build configuration list for PBXNativeTarget "ScreenCap" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2C67D42045BC97C11AFBDEE8 /* Debug */,
+				CEE93C42A25D306F411AB59A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		A936689FB77E40FF03B4F9BB /* XCLocalSwiftPackageReference "ScreenCapCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ScreenCapCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		04582E11A4C78E8F330BB538 /* ScreenCapCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ScreenCapCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 6026F393F29AC2C07BAADF10 /* Project object */;
+}
