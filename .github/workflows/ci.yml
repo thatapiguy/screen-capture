@@ -1,0 +1,28 @@
+name: CI
+on:
+  push:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: xcodebuild -version && swift --version
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+      # The project file is generated, but committed so the repo opens in Xcode without XcodeGen.
+      - name: Commit generated project
+        run: |
+          git add ScreenCap.xcodeproj
+          if ! git diff --cached --quiet; then
+            git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "Regenerate Xcode project"
+            git push
+          fi
+      - name: Core tests
+        run: swift test --package-path ScreenCapCore
+      - name: Build app
+        run: xcodebuild -project ScreenCap.xcodeproj -scheme ScreenCap -configuration Debug -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO -quiet build

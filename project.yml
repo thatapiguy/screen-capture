@@ -1,0 +1,38 @@
+# Source of truth for ScreenCap.xcodeproj. CI regenerates and commits the project
+# whenever this changes; locally: `brew install xcodegen && xcodegen`.
+name: ScreenCap
+options:
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+packages:
+  ScreenCapCore:
+    path: ScreenCapCore
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  ScreenCap:
+    type: application
+    platform: macOS
+    sources: [ScreenCap]
+    dependencies:
+      - package: ScreenCapCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.thatapiguy.ScreenCap
+        INFOPLIST_FILE: ScreenCap/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_ENTITLEMENTS: ScreenCap/ScreenCap.entitlements
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "-"
+        ENABLE_HARDENED_RUNTIME: YES
+schemes:
+  ScreenCap:
+    build:
+      targets:
+        ScreenCap: all
+    run:
+      config: Debug
