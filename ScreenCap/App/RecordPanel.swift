@@ -10,6 +10,10 @@ struct RecordPanel: View {
     @AppStorage(Prefs.Key.fps) private var fps = 60
     @AppStorage(Prefs.Key.cap) private var cap = ResolutionCap.native
     @AppStorage(Prefs.Key.micID) private var micID = ""
+    @AppStorage(Prefs.Key.cameraID) private var cameraID = ""
+    @AppStorage(Prefs.Key.cameraShape) private var cameraShape = CameraShape.circle
+    @AppStorage(Prefs.Key.cameraMirrored) private var cameraMirrored = true
+    @AppStorage(Prefs.Key.systemAudio) private var systemAudio = false
     let showPermissions: () -> Void
 
     var body: some View {
@@ -31,6 +35,31 @@ struct RecordPanel: View {
 
                 Divider()
 
+                LabeledContent("Camera") {
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Picker("Camera", selection: $cameraID) {
+                            Text("Off").tag("")
+                            ForEach(recorder.cameras, id: \.uniqueID) { Text($0.localizedName).tag($0.uniqueID) }
+                        }
+                        .labelsHidden()
+                        .disabled(permissions.camera != .authorized)
+                        if permissions.camera != .authorized {
+                            Button("Allow camera…", action: showPermissions).buttonStyle(.link).font(.caption)
+                        } else if !cameraID.isEmpty {
+                            HStack {
+                                Picker("Shape", selection: $cameraShape) {
+                                    Image(systemName: "circle").tag(CameraShape.circle)
+                                    Image(systemName: "app").tag(CameraShape.rounded)
+                                }
+                                .pickerStyle(.segmented)
+                                .labelsHidden()
+                                .fixedSize()
+                                Toggle("Mirror", isOn: $cameraMirrored)
+                            }
+                            .controlSize(.small)
+                        }
+                    }
+                }
                 LabeledContent("Microphone") {
                     VStack(alignment: .trailing, spacing: 4) {
                         Picker("Microphone", selection: $micID) {
@@ -46,6 +75,7 @@ struct RecordPanel: View {
                         }
                     }
                 }
+                Toggle("Record system audio", isOn: $systemAudio)
                 LabeledContent("Frame rate") {
                     Picker("Frame rate", selection: $fps) {
                         Text("30").tag(30)
@@ -67,10 +97,11 @@ struct RecordPanel: View {
                 }
 
                 Button {
-                    Task { await recorder.start() }
+                    recorder.start()
                 } label: {
                     Text("Start Recording").frame(maxWidth: .infinity)
                 }
+                .help("Start or stop from anywhere with \(HotkeyAction.toggleRecording.combo.label)")
                 .controlSize(.large)
                 .keyboardShortcut(.defaultAction)
                 .disabled(recorder.state != .idle || !canRecord)
@@ -88,7 +119,10 @@ struct RecordPanel: View {
         }
         .padding(14)
         .frame(width: 320)
-        .onChange(of: micID) { recorder.updateMic() }
+        .onChange(of: micID) { recorder.updateDevices() }
+        .onChange(of: cameraID) { recorder.updateDevices() }
+        .onChange(of: cameraShape) { recorder.updateDevices() }
+        .onChange(of: cameraMirrored) { recorder.updateDevices() }
         .onChange(of: recorder.displayID) { recorder.region = nil }
     }
 
@@ -151,8 +185,8 @@ struct RecordPanel: View {
 
     private var footer: some View {
         HStack {
-            if let url = recorder.lastRecording {
-                Button("Show Last Recording") { NSWorkspace.shared.activateFileViewerSelecting([url]) }
+            if let bundle = recorder.lastRecording {
+                Button("Show Last Recording") { NSWorkspace.shared.activateFileViewerSelecting([bundle.url]) }
                     .buttonStyle(.link)
                 if recorder.droppedFrames > 0 {
                     Image(systemName: "exclamationmark.triangle.fill")

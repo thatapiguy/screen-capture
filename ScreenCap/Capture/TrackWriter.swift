@@ -3,32 +3,61 @@ import ScreenCapCore
 
 enum RecordingError: LocalizedError {
     case noSource
+    case noPermission
     case writerSetup(String)
 
     var errorDescription: String? {
         switch self {
         case .noSource: "Nothing to record. Pick a display, window or region first."
+        case .noPermission: "ScreenCap needs Screen Recording permission. Open the menu bar panel to set it up."
         case .writerSetup(let detail): "Couldn't create the recording file (\(detail))."
         }
     }
 }
 
-/// The instant every track's file starts at. Set by the first screen frame so all
-/// files share one host-clock origin and stay in sync without any later alignment.
+/// One timeline for every track. Position zero is the first screen frame; time spent paused
+/// is removed. All capture timestamps are host-clock times and are mapped through here, which
+/// is what keeps camera, microphone, system audio and cursor data in sync with the screen.
 final class SessionClock: @unchecked Sendable {
     private let lock = NSLock()
-    private var value: CMTime?
+    private var startTime: CMTime?
+    private var pausedTotal = CMTime.zero
+    private var pauseBegan: CMTime?
 
-    var start: CMTime? { lock.withLock { value } }
+    static var hostNow: CMTime { CMClockGetTime(CMClockGetHostTimeClock()) }
 
-    func startIfNeeded(at time: CMTime) -> CMTime {
+    func startIfNeeded(at hostTime: CMTime) {
+        lock.withLock { if startTime == nil { startTime = hostTime } }
+    }
+
+    /// Timeline position of a host-clock timestamp; nil before the start and while paused.
+    func position(for hostTime: CMTime) -> CMTime? {
         lock.withLock {
-            if value == nil { value = time }
-            return value!
+            guard let startTime, hostTime >= startTime else { return nil }
+            if let pauseBegan, hostTime >= pauseBegan { return nil }
+            return hostTime - startTime - pausedTotal
         }
     }
 
-    static var now: CMTime { CMClockGetTime(CMClockGetHostTimeClock()) }
+    /// Current timeline position; stands still while paused.
+    var now: CMTime {
+        lock.withLock {
+            guard let startTime else { return .zero }
+            return (pauseBegan ?? Self.hostNow) - startTime - pausedTotal
+        }
+    }
+
+    func pause() {
+        lock.withLock { if pauseBegan == nil { pauseBegan = Self.hostNow } }
+    }
+
+    func resume() {
+        lock.withLock {
+            guard let began = pauseBegan else { return }
+            pausedTotal = pausedTotal + (Self.hostNow - began)
+            pauseBegan = nil
+        }
+    }
 }
 
 /// One media file with one track, written incrementally as a fragmented QuickTime
@@ -63,23 +92,24 @@ final class TrackWriter: @unchecked Sendable {
 
     var error: Error? { lock.withLock { writer.status == .failed ? writer.error : nil } }
 
-    /// Called synchronously on the capture queue. Never blocks: if the encoder is
-    /// backed up the sample is dropped and counted, which keeps memory bounded.
-    func append(_ sample: CMSampleBuffer, sessionStart: CMTime) {
+    /// Called synchronously on a capture queue. Never blocks: if the encoder is backed up
+    /// the sample is dropped and counted, which keeps memory bounded.
+    func append(_ sample: CMSampleBuffer, hostTime: CMTime, clock: SessionClock) {
+        guard let position = clock.position(for: hostTime) else { return }
         lock.lock()
         defer { lock.unlock() }
         guard !finished, writer.status == .writing else { return }
-        let pts = CMSampleBufferGetPresentationTimeStamp(sample)
-        guard pts >= sessionStart else { return }
+        // A sample captured just before a pause can arrive after the resume; it would run backwards.
+        if lastPTS.isValid, position <= lastPTS { return }
         if !started {
-            writer.startSession(atSourceTime: sessionStart)
+            writer.startSession(atSourceTime: .zero)
             started = true
         }
         guard input.isReadyForMoreMediaData else {
             droppedCount += 1
             return
         }
-        if input.append(sample) { lastPTS = pts }
+        if let retimed = sample.retimed(to: position), input.append(retimed) { lastPTS = position }
     }
 
     /// Returns true if a playable file was written.
@@ -122,6 +152,22 @@ final class TrackWriter: @unchecked Sendable {
         ]
     }
 
+    /// The camera is cropped to a square inset later, so 720p is plenty; aspect-fill keeps
+    /// 4:3 cameras undistorted.
+    static var cameraSettings: [String: Any] {
+        [
+            AVVideoCodecKey: AVVideoCodecType.hevc,
+            AVVideoWidthKey: 1280,
+            AVVideoHeightKey: 720,
+            AVVideoScalingModeKey: AVVideoScalingModeResizeAspectFill,
+            AVVideoCompressionPropertiesKey: [
+                AVVideoAverageBitRateKey: 6_000_000,
+                AVVideoMaxKeyFrameIntervalDurationKey: 2.0,
+                AVVideoAllowFrameReorderingKey: false,
+            ],
+        ]
+    }
+
     static var audioSettings: [String: Any] {
         [
             AVFormatIDKey: kAudioFormatMPEG4AAC,
@@ -152,5 +198,15 @@ extension CMSampleBuffer {
             allocator: kCFAllocatorDefault, sampleBuffer: self,
             sampleTimingEntryCount: count, sampleTimingArray: &timing, sampleBufferOut: &copy)
         return copy
+    }
+}
+
+extension AVCaptureSession {
+    /// Capture timestamps are on the session's clock, which can be a device clock. Screen
+    /// frames use the host clock, so everything is converted to it before being written.
+    func hostTime(of sample: CMSampleBuffer) -> CMTime {
+        let pts = CMSampleBufferGetPresentationTimeStamp(sample)
+        guard let clock = synchronizationClock else { return pts }
+        return CMSyncConvertTime(pts, from: clock, to: CMClockGetHostTimeClock())
     }
 }

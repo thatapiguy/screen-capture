@@ -22,13 +22,16 @@ extension SCDisplay {
 /// Mutable state is only touched from start/stop, which the Recorder calls serially.
 final class CaptureEngine: NSObject, SCStreamOutput, SCStreamDelegate, @unchecked Sendable {
     private let queue = DispatchQueue(label: "screencap.capture.screen", qos: .userInitiated)
+    private let audioQueue = DispatchQueue(label: "screencap.capture.audio", qos: .userInitiated)
     private let writer: TrackWriter
+    private let systemAudio: TrackWriter?
     private let clock: SessionClock
     private let onStop: @Sendable (Error) -> Void
     private var stream: SCStream?
 
-    init(writer: TrackWriter, clock: SessionClock, onStop: @escaping @Sendable (Error) -> Void) {
+    init(writer: TrackWriter, systemAudio: TrackWriter?, clock: SessionClock, onStop: @escaping @Sendable (Error) -> Void) {
         self.writer = writer
+        self.systemAudio = systemAudio
         self.clock = clock
         self.onStop = onStop
     }
@@ -44,7 +47,7 @@ final class CaptureEngine: NSObject, SCStreamOutput, SCStreamDelegate, @unchecke
     }
 
     static func makeConfiguration(
-        source: CaptureSource, filter: SCContentFilter, fps: Int, cap: ResolutionCap
+        source: CaptureSource, filter: SCContentFilter, fps: Int, cap: ResolutionCap, systemAudio: Bool
     ) -> SCStreamConfiguration {
         let config = SCStreamConfiguration()
         var points = filter.contentRect.size
@@ -62,14 +65,23 @@ final class CaptureEngine: NSObject, SCStreamOutput, SCStreamDelegate, @unchecke
         config.pixelFormat = kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
         config.colorSpaceName = CGColorSpace.sRGB
         config.colorMatrix = CGDisplayStream.yCbCrMatrix_ITU_R_709_2
-        // Baked in until M3 records the cursor as data; then this becomes false.
-        config.showsCursor = true
+        // The cursor is recorded as data (events.jsonl) and drawn by the compositor instead.
+        config.showsCursor = false
+        if systemAudio {
+            config.capturesAudio = true
+            config.excludesCurrentProcessAudio = true
+            config.sampleRate = 48_000
+            config.channelCount = 2
+        }
         return config
     }
 
     func start(filter: SCContentFilter, configuration: SCStreamConfiguration) async throws {
         let stream = SCStream(filter: filter, configuration: configuration, delegate: self)
         try stream.addStreamOutput(self, type: .screen, sampleHandlerQueue: queue)
+        if systemAudio != nil {
+            try stream.addStreamOutput(self, type: .audio, sampleHandlerQueue: audioQueue)
+        }
         try await stream.startCapture()
         self.stream = stream
     }
@@ -80,15 +92,20 @@ final class CaptureEngine: NSObject, SCStreamOutput, SCStreamDelegate, @unchecke
     }
 
     func stream(_ stream: SCStream, didOutputSampleBuffer sample: CMSampleBuffer, of type: SCStreamOutputType) {
+        guard sample.isValid else { return }
+        if type == .audio {
+            systemAudio?.append(sample, hostTime: sample.presentationTimeStamp, clock: clock)
+            return
+        }
         // Idle/blank status frames carry no new pixels; only complete frames are written.
-        guard type == .screen, sample.isValid,
+        guard type == .screen,
               let attachments = CMSampleBufferGetSampleAttachmentsArray(sample, createIfNecessary: false)
                 as? [[SCStreamFrameInfo: Any]],
               let rawStatus = attachments.first?[.status] as? Int,
               SCFrameStatus(rawValue: rawStatus) == .complete
         else { return }
-        let start = clock.startIfNeeded(at: sample.presentationTimeStamp)
-        writer.append(sample, sessionStart: start)
+        clock.startIfNeeded(at: sample.presentationTimeStamp)
+        writer.append(sample, hostTime: sample.presentationTimeStamp, clock: clock)
     }
 
     func stream(_ stream: SCStream, didStopWithError error: Error) {

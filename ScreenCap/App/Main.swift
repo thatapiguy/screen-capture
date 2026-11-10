@@ -18,6 +18,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private let recorder = Recorder()
     private let permissions = Permissions()
     private let popover = NSPopover()
+    private let hotkeys = Hotkeys()
     private var statusItem: NSStatusItem!
     private var permissionsWindow: NSWindow?
 
@@ -26,6 +27,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         statusItem.button?.target = self
         statusItem.button?.action = #selector(statusItemClicked)
         statusItem.button?.imagePosition = .imageLeading
+        statusItem.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
 
         let panel = RecordPanel(showPermissions: { [weak self] in self?.showPermissions() })
             .environment(recorder)
@@ -38,23 +40,53 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
         recorder.hidePanel = { [weak self] in self?.popover.performClose(nil) }
         recorder.showPanel = { [weak self] in self?.showPanel() }
+        hotkeys.handler = { [weak self] action in
+            guard let self else { return }
+            switch action {
+            case .toggleRecording: recorder.toggleRecording()
+            case .togglePause: recorder.togglePause()
+            case .zoomHere: recorder.zoomHere()
+            }
+        }
 
         permissions.refresh()
         if permissions.needsOnboarding { showPermissions() }
         trackRecorder()
     }
 
-    /// Clicking the icon stops a recording in progress; otherwise it toggles the panel.
+    /// Clicking the icon stops a recording in progress; right-click offers pause. Otherwise it toggles the panel.
     @objc private func statusItemClicked() {
         switch recorder.state {
-        case .recording:
-            Task { await recorder.stop() }
+        case .recording, .paused:
+            if NSApp.currentEvent?.type == .rightMouseUp {
+                showRecordingMenu()
+            } else {
+                recorder.toggleRecording()
+            }
+        case .starting:
+            recorder.toggleRecording()
         case .idle:
             if popover.isShown { popover.performClose(nil) } else { showPanel() }
-        case .starting, .finishing:
+        case .finishing:
             break
         }
     }
+
+    private func showRecordingMenu() {
+        let menu = NSMenu()
+        let pause = menu.addItem(withTitle: recorder.state == .paused ? "Resume" : "Pause",
+                                 action: #selector(togglePause), keyEquivalent: "")
+        pause.target = self
+        let stop = menu.addItem(withTitle: "Stop Recording", action: #selector(stopRecording), keyEquivalent: "")
+        stop.target = self
+        statusItem.menu = menu
+        statusItem.button?.performClick(nil)
+        // Detach again so a normal click keeps meaning "stop".
+        statusItem.menu = nil
+    }
+
+    @objc private func togglePause() { recorder.togglePause() }
+    @objc private func stopRecording() { recorder.toggleRecording() }
 
     private func showPanel() {
         guard let button = statusItem.button, !popover.isShown else { return }
@@ -102,12 +134,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         switch recorder.state {
         case .idle, .starting:
             break
-        case .recording:
-            symbol = "stop.circle.fill"
-            tint = .systemRed
+        case .recording, .paused:
+            let paused = recorder.state == .paused
+            symbol = paused ? "pause.circle.fill" : "stop.circle.fill"
+            tint = paused ? .systemOrange : .systemRed
             let seconds = Int(recorder.elapsed)
             title = String(format: " %02d:%02d", seconds / 60, seconds % 60)
-            tip = "Click to stop recording"
+            tip = "Click to stop recording. Right-click to pause."
             if recorder.isDroppingFrames {
                 title += " ⚠︎"
                 tip = "Frames are being dropped (\(recorder.droppedFrames) so far). Click to stop recording."

@@ -9,6 +9,7 @@ final class MicEngine: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, @
     private let sampleQueue = DispatchQueue(label: "screencap.mic.samples", qos: .userInitiated)
     private let lock = NSLock()
     private var sink: (writer: TrackWriter, clock: SessionClock)?
+    private var currentDeviceID: String?
 
     override init() {
         super.init()
@@ -34,6 +35,8 @@ final class MicEngine: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, @
     /// Switches to the given microphone and runs the session; nil stops it.
     func select(deviceID: String?) {
         sessionQueue.async { [self] in
+            guard deviceID != currentDeviceID || (deviceID != nil) != session.isRunning else { return }
+            currentDeviceID = deviceID
             session.beginConfiguration()
             for input in session.inputs { session.removeInput(input) }
             var running = false
@@ -64,15 +67,7 @@ final class MicEngine: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, @
     }
 
     func captureOutput(_ output: AVCaptureOutput, didOutput sample: CMSampleBuffer, from connection: AVCaptureConnection) {
-        guard let sink = lock.withLock({ self.sink }), let start = sink.clock.start else { return }
-        // Capture timestamps are on the session's clock, which can be the audio device's.
-        // Screen frames use the host clock, so move the audio onto it to keep the tracks in sync.
-        var sample = sample
-        if let sessionClock = session.synchronizationClock {
-            let pts = CMSampleBufferGetPresentationTimeStamp(sample)
-            let hostPTS = CMSyncConvertTime(pts, from: sessionClock, to: CMClockGetHostTimeClock())
-            if hostPTS != pts, let retimed = sample.retimed(to: hostPTS) { sample = retimed }
-        }
-        sink.writer.append(sample, sessionStart: start)
+        guard let sink = lock.withLock({ self.sink }) else { return }
+        sink.writer.append(sample, hostTime: session.hostTime(of: sample), clock: sink.clock)
     }
 }
