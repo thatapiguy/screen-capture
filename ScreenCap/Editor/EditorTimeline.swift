@@ -17,7 +17,7 @@ struct EditorTimeline: View {
     var body: some View {
         GeometryReader { geometry in
             let duration = max(0.1, model.timeline.duration)
-            let width = max(100, geometry.size.width - gutter - 12) * zoom
+            let width = Double(max(100, geometry.size.width - gutter - 12)) * zoom
             let pps = width / duration
             HStack(alignment: .top, spacing: 0) {
                 labels.frame(width: gutter)
