@@ -58,6 +58,7 @@
 		BBAD19D3E1607D23655293B4 /* Compositor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Compositor.swift; sourceTree = "<group>"; };
 		C7F80E67CA35DB2DB36F6C3E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		D5C424D2DE7686C9B2E765C3 /* MicEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicEngine.swift; sourceTree = "<group>"; };
+		FA280595DBB05F1E9463D751 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
 		FAB9B492C5945F3BD51ED905 /* MetadataRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetadataRecorder.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -96,6 +97,7 @@
 		47195F990ADF0CF78A5FCBAA = {
 			isa = PBXGroup;
 			children = (
+				7C0FB3E75300AA7539B57F6D /* Config */,
 				C54345BC4D19A7EA8C5ECFDC /* Packages */,
 				C36AEBB36D03FF3651B05AA5 /* ScreenCap */,
 				16BFE43458F7A5C67AADB468 /* Products */,
@@ -111,6 +113,14 @@
 				AB4317E0E2FAA48D61FB30B6 /* Inspector.swift */,
 			);
 			path = Editor;
+			sourceTree = "<group>";
+		};
+		7C0FB3E75300AA7539B57F6D /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				FA280595DBB05F1E9463D751 /* Signing.xcconfig */,
+			);
+			path = Config;
 			sourceTree = "<group>";
 		};
 		825D96744F9386298A5C1E32 /* Render */ = {
@@ -209,6 +219,7 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					7EE71E71D674F2F574CA29B0 = {
+						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -328,11 +339,10 @@
 		};
 		2C67D42045BC97C11AFBDEE8 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = FA280595DBB05F1E9463D751 /* Signing.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = ScreenCap/ScreenCap.entitlements;
-				CODE_SIGN_IDENTITY = "-";
-				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -413,11 +423,10 @@
 		};
 		CEE93C42A25D306F411AB59A /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = FA280595DBB05F1E9463D751 /* Signing.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = ScreenCap/ScreenCap.entitlements;
-				CODE_SIGN_IDENTITY = "-";
-				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
