@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 
 /// Maps between source time (the raw recording) and output time (what plays after trims and cuts).

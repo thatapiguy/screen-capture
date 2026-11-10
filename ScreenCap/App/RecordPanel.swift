@@ -15,6 +15,8 @@ struct RecordPanel: View {
     @AppStorage(Prefs.Key.cameraMirrored) private var cameraMirrored = true
     @AppStorage(Prefs.Key.systemAudio) private var systemAudio = false
     let showPermissions: () -> Void
+    let showSettings: () -> Void
+    let openRecording: (ReelBundle) -> Void
 
     var body: some View {
         @Bindable var recorder = recorder
@@ -186,7 +188,7 @@ struct RecordPanel: View {
     private var footer: some View {
         HStack {
             if let bundle = recorder.lastRecording {
-                Button("Show Last Recording") { NSWorkspace.shared.activateFileViewerSelecting([bundle.url]) }
+                Button("Edit Last Recording") { openRecording(bundle) }
                     .buttonStyle(.link)
                 if recorder.droppedFrames > 0 {
                     Image(systemName: "exclamationmark.triangle.fill")
@@ -196,6 +198,17 @@ struct RecordPanel: View {
             }
             Spacer()
             Menu {
+                Menu("Recent Recordings") {
+                    let recent = ProjectStore.all().prefix(8)
+                    if recent.isEmpty { Text("None yet") }
+                    ForEach(Array(recent), id: \.self) { bundle in
+                        Button(bundle.name) { openRecording(bundle) }
+                    }
+                    Divider()
+                    Button("Show Folder in Finder") { NSWorkspace.shared.open(ProjectStore.folder) }
+                }
+                Divider()
+                Button("Settings…", action: showSettings)
                 Button("Permissions…", action: showPermissions)
                 Divider()
                 Button("Quit ScreenCap") { NSApp.terminate(nil) }.keyboardShortcut("q")

@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 
 public enum ResolutionCap: String, CaseIterable, Codable, Sendable {

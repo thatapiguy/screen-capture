@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 
 /// The virtual camera over the whole recording: zoom scale and centre, sampled at a fixed step.

@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 
 /// Where things sit on the output canvas. Shared by the compositor and the editor's overlays.

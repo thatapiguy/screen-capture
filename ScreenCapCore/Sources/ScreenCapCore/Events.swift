@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 
 /// One line of `events.jsonl`. Positions are normalised to the captured area (0…1, origin top-left).
