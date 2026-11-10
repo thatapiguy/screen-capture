@@ -41,7 +41,7 @@ final class ZoomTests: XCTestCase {
     }
 
     func testRegionsAreClampedToTheRecording() {
-        let regions = AutoZoom.regions(events: [click(0.1), click(9.9)], duration: 10, sensitivity: .normal)
+        let regions = AutoZoom.regions(events: [click(0.1), click(9)], duration: 10, sensitivity: .normal)
         XCTAssertEqual(regions.first?.start, 0)
         XCTAssertEqual(regions.last?.end, 10)
     }

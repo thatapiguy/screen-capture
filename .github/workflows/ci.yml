@@ -25,6 +25,7 @@ jobs:
       - name: Core tests
         run: swift test --package-path ScreenCapCore
       - name: Build app
+        if: success() || failure()
         run: |
           # Keep the log readable: only diagnostics on failure.
           if ! xcodebuild -project ScreenCap.xcodeproj -scheme ScreenCap -configuration Debug -destination 'platform=macOS,arch=arm64' CODE_SIGNING_ALLOWED=NO build > build.log 2>&1; then
