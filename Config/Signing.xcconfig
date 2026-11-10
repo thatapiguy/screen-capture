@@ -1,0 +1,10 @@
+// Default: ad-hoc signing, which builds anywhere but gives every build a new identity,
+// so macOS forgets privacy permissions (Screen Recording, Camera, Microphone) on each rebuild.
+CODE_SIGN_STYLE = Automatic
+CODE_SIGN_IDENTITY = -
+DEVELOPMENT_TEAM =
+
+// To keep permissions across rebuilds, create Config/Local.xcconfig (git-ignored) containing:
+//   DEVELOPMENT_TEAM = YOURTEAMID
+//   CODE_SIGN_IDENTITY = Apple Development
+#include? "Local.xcconfig"

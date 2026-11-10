@@ -20,14 +20,16 @@ targets:
     sources: [ScreenCap]
     dependencies:
       - package: ScreenCapCore
+    # Signing lives in an xcconfig so a personal team can be set locally without touching the project.
+    configFiles:
+      Debug: Config/Signing.xcconfig
+      Release: Config/Signing.xcconfig
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.thatapiguy.ScreenCap
         INFOPLIST_FILE: ScreenCap/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: ScreenCap/ScreenCap.entitlements
-        CODE_SIGN_STYLE: Automatic
-        CODE_SIGN_IDENTITY: "-"
         ENABLE_HARDENED_RUNTIME: YES
 schemes:
   ScreenCap:

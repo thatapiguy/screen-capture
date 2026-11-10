@@ -12,8 +12,21 @@ Requires Xcode 16+ on macOS 14+.
 open ScreenCap.xcodeproj
 ```
 
-Select the `ScreenCap` scheme and run. In *Signing & Capabilities*, pick your own team: with ad-hoc
-signing macOS forgets the Screen Recording permission on every rebuild.
+Select the `ScreenCap` scheme and run.
+
+### Keeping permissions between builds
+
+By default the app is ad-hoc signed, so every rebuild looks like a different app to macOS and the
+Screen Recording, Camera and Microphone grants stop applying. Sign with your own team to fix that.
+Create `Config/Local.xcconfig` (it is git-ignored):
+
+```
+DEVELOPMENT_TEAM = YOURTEAMID
+CODE_SIGN_IDENTITY = Apple Development
+```
+
+A free Apple ID added under Xcode › Settings › Accounts is enough. Don't pick the team in the
+target's Signing tab: that edits the generated project file, which CI overwrites.
 
 `ScreenCap.xcodeproj` is generated from `project.yml` by [XcodeGen](https://github.com/yonaskolb/XcodeGen).
 CI regenerates and commits it, so you only need XcodeGen if you change `project.yml` locally.
