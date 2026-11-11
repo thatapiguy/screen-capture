@@ -1,13 +1,18 @@
 @preconcurrency import AVFoundation
+import ImageIO
 import ScreenCapCore
+import UniformTypeIdentifiers
+import VideoToolbox
 
 enum ExportError: LocalizedError {
     case tooLargeForH264
+    case gifTooLong(seconds: Int)
     case failed(String)
 
     var errorDescription: String? {
         switch self {
         case .tooLargeForH264: "H.264 can't encode a frame this large. Choose HEVC or a lower resolution."
+        case .gifTooLong(let seconds): "GIFs are limited to about \(seconds) seconds at this frame rate. Trim the recording or lower the frame rate."
         case .failed(let detail): "Export failed: \(detail)"
         }
     }
@@ -48,7 +53,57 @@ final class Exporter: @unchecked Sendable {
         }
     }
 
+    /// Animated GIF from the same composited frames as the video export.
+    private func pumpGIF(_ job: Job, progress: @Sendable (Double) -> Void) throws {
+        let fps = Double(job.settings.fps)
+        let frameCount = max(1, Int(job.asset.duration.seconds * fps))
+        guard frameCount <= ExportSettings.maxGIFFrames else {
+            throw ExportError.gifTooLong(seconds: Int(Double(ExportSettings.maxGIFFrames) / fps))
+        }
+        let reader = try AVAssetReader(asset: job.asset)
+        let output = AVAssetReaderVideoCompositionOutput(
+            videoTracks: job.asset.tracks(withMediaType: .video),
+            videoSettings: [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA])
+        output.videoComposition = job.videoComposition
+        reader.add(output)
+
+        try? FileManager.default.removeItem(at: job.destination)
+        guard let destination = CGImageDestinationCreateWithURL(
+            job.destination as CFURL, UTType.gif.identifier as CFString, frameCount, nil)
+        else { throw ExportError.failed("couldn't create the file") }
+        CGImageDestinationSetProperties(destination, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
+        let frameProperties = [kCGImagePropertyGIFDictionary: [
+            kCGImagePropertyGIFUnclampedDelayTime: 1 / fps, kCGImagePropertyGIFDelayTime: 1 / fps,
+        ]] as CFDictionary
+
+        guard reader.startReading() else { throw reader.error ?? ExportError.failed("couldn't read the recording") }
+        var previous: CGImage?
+        // The file must receive exactly the promised number of frames, so if the reader
+        // comes up one short the last frame is repeated.
+        for index in 0..<frameCount {
+            if isCancelled {
+                reader.cancelReading()
+                throw CancellationError()
+            }
+            var image: CGImage?
+            if let sample = output.copyNextSampleBuffer(), let buffer = CMSampleBufferGetImageBuffer(sample) {
+                VTCreateCGImageFromCVPixelBuffer(buffer, options: nil, imageOut: &image)
+            }
+            guard let frame = image ?? previous else { throw reader.error ?? ExportError.failed("no frames could be rendered") }
+            CGImageDestinationAddImage(destination, frame, frameProperties)
+            previous = frame
+            progress(Double(index + 1) / Double(frameCount) * 0.9)
+        }
+        reader.cancelReading()
+        guard CGImageDestinationFinalize(destination) else { throw ExportError.failed("couldn't write the GIF") }
+        progress(1)
+    }
+
     private func pump(_ job: Job, progress: @Sendable (Double) -> Void) throws {
+        if job.settings.codec == .gif {
+            try pumpGIF(job, progress: progress)
+            return
+        }
         let size = job.videoComposition.renderSize
         if job.settings.codec == .h264, size.width > 4096 || size.height > 2304 { throw ExportError.tooLargeForH264 }
 

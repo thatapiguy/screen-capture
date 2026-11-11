@@ -1,6 +1,11 @@
 import CoreGraphics
 import Foundation
 
+/// Which system cursor was showing, so the redrawn cursor matches (I-beam over text, hand over links).
+public enum CursorShape: String, Codable, CaseIterable, Sendable {
+    case arrow, iBeam, pointingHand, crosshair, openHand, closedHand, resizeLeftRight, resizeUpDown
+}
+
 /// One line of `events.jsonl`. Positions are normalised to the captured area (0…1, origin top-left).
 public struct RecordedEvent: Equatable, Sendable {
     public enum Kind: String, Sendable {
@@ -8,24 +13,30 @@ public struct RecordedEvent: Equatable, Sendable {
         /// Keystroke activity: timing only, never which key.
         case key = "k"
         case zoomOn = "z+", zoomOff = "z-"
+        /// The cursor changed shape; `shape` says to what.
+        case cursor = "c"
     }
 
     public var t: Double
     public var kind: Kind
     public var x: Double
     public var y: Double
+    public var shape: CursorShape?
 
-    public init(t: Double, kind: Kind, x: Double, y: Double) {
+    public init(t: Double, kind: Kind, x: Double, y: Double, shape: CursorShape? = nil) {
         self.t = t
         self.kind = kind
         self.x = x
         self.y = y
+        self.shape = shape
     }
 }
 
 public enum EventLog {
     public static func line(_ event: RecordedEvent) -> String {
-        String(format: "{\"t\":%.4f,\"k\":\"%@\",\"x\":%.5f,\"y\":%.5f}\n", event.t, event.kind.rawValue, event.x, event.y)
+        let shape = event.shape.map { ",\"s\":\"\($0.rawValue)\"" } ?? ""
+        return String(format: "{\"t\":%.4f,\"k\":\"%@\",\"x\":%.5f,\"y\":%.5f%@}\n",
+                      event.t, event.kind.rawValue, event.x, event.y, shape)
     }
 
     /// Tolerates a truncated final line, which is what a crash mid-write leaves behind.
@@ -42,7 +53,7 @@ public enum EventLog {
         return rows.compactMap { row in
             guard let t = row["t"] as? Double, let kind = (row["k"] as? String).flatMap(RecordedEvent.Kind.init),
                   let x = row["x"] as? Double, let y = row["y"] as? Double else { return nil }
-            return RecordedEvent(t: t, kind: kind, x: x, y: y)
+            return RecordedEvent(t: t, kind: kind, x: x, y: y, shape: (row["s"] as? String).flatMap(CursorShape.init))
         }
     }
 }
@@ -53,6 +64,7 @@ public struct CursorTrack: Sendable {
     public private(set) var xs: [Double] = []
     public private(set) var ys: [Double] = []
     public private(set) var clicks: [RecordedEvent] = []
+    private var shapes: [(time: Double, shape: CursorShape)] = []
 
     public init(events: [RecordedEvent]) {
         for event in events {
@@ -63,6 +75,11 @@ public struct CursorTrack: Sendable {
             ys.append(event.y)
         }
         clicks = events.filter { $0.kind == .down }
+        shapes = events.compactMap { event in event.shape.map { (time: event.t, shape: $0) } }
+    }
+
+    public func shape(at time: Double) -> CursorShape {
+        shapes.last { $0.time <= time }?.shape ?? .arrow
     }
 
     public var isEmpty: Bool { times.isEmpty }

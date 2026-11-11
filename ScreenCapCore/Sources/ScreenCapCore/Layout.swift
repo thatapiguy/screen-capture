@@ -30,8 +30,8 @@ public enum Layout {
 }
 
 public struct ExportSettings: Equatable, Sendable {
-    public enum Codec: String, CaseIterable, Sendable { case h264, hevc }
-    public enum Resolution: String, CaseIterable, Sendable { case p1080, p1440, p2160, source }
+    public enum Codec: String, CaseIterable, Sendable { case h264, hevc, gif }
+    public enum Resolution: String, CaseIterable, Sendable { case p480, p720, p1080, p1440, p2160, source }
     public enum Quality: String, CaseIterable, Sendable { case small, balanced, high }
 
     public var codec = Codec.h264
@@ -41,9 +41,14 @@ public struct ExportSettings: Equatable, Sendable {
 
     public init() {}
 
+    /// GIF frames are all held in memory until the file is written, so length is capped.
+    public static let maxGIFFrames = 400
+
     /// Output size: the source aspect ratio fitted inside the chosen resolution, never enlarged.
     public func renderSize(source: CGSize) -> CGSize {
         let box: CGSize? = switch resolution {
+        case .p480: CGSize(width: 854, height: 480)
+        case .p720: CGSize(width: 1280, height: 720)
         case .p1080: CGSize(width: 1920, height: 1080)
         case .p1440: CGSize(width: 2560, height: 1440)
         case .p2160: CGSize(width: 3840, height: 2160)

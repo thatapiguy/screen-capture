@@ -31,6 +31,25 @@ target's Signing tab: that edits the generated project file, which CI overwrites
 `ScreenCap.xcodeproj` is generated from `project.yml` by [XcodeGen](https://github.com/yonaskolb/XcodeGen).
 CI regenerates and commits it, so you only need XcodeGen if you change `project.yml` locally.
 
+## Releases
+
+1. Add a `## x.y.z` section to `CHANGELOG.md` describing the changes.
+2. Tag the commit and push the tag:
+
+   ```bash
+   git tag v0.2.0 && git push origin v0.2.0
+   ```
+
+3. The Release workflow builds a universal app, zips it and creates a **draft** GitHub release
+   with that changelog section as its notes. Review it on GitHub and publish.
+
+Release builds are ad-hoc signed, not notarized, so macOS blocks the first launch of a downloaded
+copy. Open it once via System Settings › Privacy & Security › Open Anyway, or clear the quarantine flag:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/ScreenCap.app
+```
+
 ## Tests
 
 ```bash
@@ -44,6 +63,7 @@ swift test --package-path ScreenCapCore
 - While recording, click the menu bar icon to stop, or right-click it to pause.
 - The editor opens when a recording stops. Space plays, ←/→ step a frame, S splits, ⌫ deletes the
   selection, Z adds a zoom, [ and ] trim to the playhead, ⌘Z/⇧⌘Z undo and redo, ⌘E exports.
+- Trim › Remove Silences cuts every long quiet stretch in one step. Export offers MP4 or animated GIF.
 
 ## Recording bundle
 

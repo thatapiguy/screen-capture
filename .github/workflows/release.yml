@@ -1,0 +1,44 @@
+name: Release
+# Push a tag like v0.2.0 to build the app and draft a GitHub release with notes
+# taken from the matching section of CHANGELOG.md.
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Version from tag
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+      - name: Release notes from CHANGELOG.md
+        run: |
+          awk -v v="$VERSION" '$0 == "## " v {found=1; next} /^## / {found=0} found' CHANGELOG.md > notes.md
+          if ! grep -q '[^[:space:]]' notes.md; then
+            echo "CHANGELOG.md has no '## $VERSION' section" >&2
+            exit 1
+          fi
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+      - name: Tests
+        run: swift test --package-path ScreenCapCore
+      - name: Build
+        run: |
+          # Ad-hoc signed (no Developer ID certificate is configured), universal binary.
+          if ! xcodebuild -project ScreenCap.xcodeproj -scheme ScreenCap -configuration Release \
+              -destination 'generic/platform=macOS' -derivedDataPath build \
+              ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
+              MARKETING_VERSION="$VERSION" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" build > build.log 2>&1; then
+            grep -E "(error|warning): " build.log | sort -u
+            exit 1
+          fi
+          codesign --verify --deep --strict build/Build/Products/Release/ScreenCap.app
+          ditto -c -k --keepParent build/Build/Products/Release/ScreenCap.app "ScreenCap-$VERSION.zip"
+      - name: Draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" "ScreenCap-$VERSION.zip" --draft --title "ScreenCap $VERSION" --notes-file notes.md

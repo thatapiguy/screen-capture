@@ -54,7 +54,7 @@ final class EditorModel {
     @ObservationIgnored private var smoothedCursor: (strength: Double, track: CursorTrack)?
     @ObservationIgnored private var zoomCache: (regions: [ZoomRegion], path: ZoomPath)?
     @ObservationIgnored private var built: BuiltComposition?
-    @ObservationIgnored private var cursorImage: CIImage?
+    @ObservationIgnored private var cursors: [CursorShape: CursorArt] = [:]
     @ObservationIgnored private var undoStack: [EditDecisions] = []
     @ObservationIgnored private var redoStack: [EditDecisions] = []
     @ObservationIgnored private var dragSnapshot: EditDecisions?
@@ -77,7 +77,7 @@ final class EditorModel {
             sourceDuration = try await AVURLAsset(url: bundle.screen).load(.duration).seconds
             events = bundle.loadEvents()
             rawCursor = CursorTrack(events: events)
-            cursorImage = Self.arrowImage()
+            cursors = Self.cursorArt()
             hasCamera = bundle.has(bundle.camera)
             hasMic = bundle.has(bundle.mic)
             hasSystemAudio = bundle.has(bundle.systemAudio)
@@ -124,11 +124,16 @@ final class EditorModel {
         }
     }
 
-    /// The system arrow, drawn large so it stays sharp when zoomed.
-    private static func arrowImage() -> CIImage? {
-        let image = NSCursor.arrow.image
-        var rect = CGRect(x: 0, y: 0, width: image.size.width * 8, height: image.size.height * 8)
-        return image.cgImage(forProposedRect: &rect, context: nil, hints: nil).map { CIImage(cgImage: $0) }
+    /// The standard cursors, rasterised large so they stay sharp when zoomed.
+    private static func cursorArt() -> [CursorShape: CursorArt] {
+        var art: [CursorShape: CursorArt] = [:]
+        for shape in CursorShape.allCases {
+            let cursor = shape.cursor
+            var rect = CGRect(x: 0, y: 0, width: cursor.image.size.width * 8, height: cursor.image.size.height * 8)
+            guard let image = cursor.image.cgImage(forProposedRect: &rect, context: nil, hints: nil) else { continue }
+            art[shape] = CursorArt(image: CIImage(cgImage: image), size: cursor.image.size, hotSpot: cursor.hotSpot)
+        }
+        return art
     }
 
     // MARK: - Rendering (shared with export)
@@ -154,8 +159,7 @@ final class EditorModel {
         }
         return RenderState(
             timeline: timeline, edits: edits, info: info, zoomPath: zoomCache?.path ?? .identity,
-            cursor: smoothedCursor?.track ?? rawCursor, cursorImage: cursorImage,
-            cursorSize: NSCursor.arrow.image.size, cursorHotSpot: NSCursor.arrow.hotSpot,
+            cursor: smoothedCursor?.track ?? rawCursor, cursors: cursors,
             showsFullFrame: showsFullFrame, screenTrack: built.screenTrack, cameraTrack: built.cameraTrack)
     }
 
@@ -321,6 +325,18 @@ final class EditorModel {
 
     var hasRemovedSections: Bool {
         edits.trimStart > 0 || edits.trimEnd != nil || !edits.cuts.isEmpty || !edits.splits.isEmpty
+    }
+
+    var canRemoveSilences: Bool { !waveform.isEmpty }
+
+    /// Ripple-deletes every long quiet stretch in one undoable step.
+    func removeSilences() {
+        let ranges = Silence.ranges(peaks: waveform, rate: waveformRate)
+        guard !ranges.isEmpty else { return }
+        select(.none)
+        apply { edits in
+            for range in ranges { edits.delete(range) }
+        }
     }
 
     func deleteSelection() {

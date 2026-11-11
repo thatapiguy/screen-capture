@@ -85,3 +85,42 @@ final class TimelineTests: XCTestCase {
         XCTAssertEqual(decoded, edits)
     }
 }
+
+final class SilenceTests: XCTestCase {
+    /// 10 peaks per second: `loud` seconds of speech then `quiet` seconds of nothing, repeated.
+    private func peaks(_ pattern: [(seconds: Double, level: Float)]) -> [Float] {
+        pattern.flatMap { [Float](repeating: $0.level, count: Int($0.seconds * 10)) }
+    }
+
+    func testFindsLongSilencesWithPadding() {
+        let ranges = Silence.ranges(peaks: peaks([(2, 0.5), (3, 0.001), (2, 0.4)]), rate: 10)
+        XCTAssertEqual(ranges.count, 1)
+        XCTAssertEqual(ranges[0].start, 2.2, accuracy: 1e-9)
+        XCTAssertEqual(ranges[0].end, 4.8, accuracy: 1e-9)
+    }
+
+    func testIgnoresShortPausesAndFindsTrailingSilence() {
+        let ranges = Silence.ranges(peaks: peaks([(2, 0.5), (0.8, 0), (2, 0.5), (4, 0)]), rate: 10)
+        XCTAssertEqual(ranges.count, 1)
+        XCTAssertEqual(ranges[0].start, 5.0, accuracy: 1e-9)
+        XCTAssertEqual(ranges[0].end, 8.6, accuracy: 1e-9)
+    }
+
+    func testMutedRecordingIsLeftAlone() {
+        XCTAssertTrue(Silence.ranges(peaks: peaks([(30, 0.001)]), rate: 10).isEmpty)
+        XCTAssertTrue(Silence.ranges(peaks: [], rate: 10).isEmpty)
+    }
+
+    func testCursorShapeRoundTripsAndIsLookedUpByTime() {
+        let events = [RecordedEvent(t: 0, kind: .move, x: 0.1, y: 0.1),
+                      RecordedEvent(t: 2, kind: .cursor, x: 0.2, y: 0.2, shape: .iBeam),
+                      RecordedEvent(t: 5, kind: .cursor, x: 0.3, y: 0.3, shape: .arrow)]
+        let parsed = EventLog.parse(Data(events.map(EventLog.line).joined().utf8))
+        XCTAssertEqual(parsed, events)
+        let track = CursorTrack(events: parsed)
+        XCTAssertEqual(track.shape(at: 1), .arrow)
+        XCTAssertEqual(track.shape(at: 3), .iBeam)
+        XCTAssertEqual(track.shape(at: 6), .arrow)
+        XCTAssertEqual(track.smoothed(strength: 0.5).shape(at: 3), .iBeam)
+    }
+}

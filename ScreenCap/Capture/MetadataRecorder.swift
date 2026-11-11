@@ -9,6 +9,9 @@ import ScreenCapCore
 final class MetadataRecorder: @unchecked Sendable {
     private let queue = DispatchQueue(label: "screencap.metadata", qos: .utility)
     private let timer: DispatchSourceTimer
+    /// The current system cursor can only be read on the main thread.
+    private let shapeTimer = DispatchSource.makeTimerSource(queue: .main)
+    private var lastShape = CursorShape.arrow
     private let handle: FileHandle
     private let clock: SessionClock
     /// Captured area in global display points (origin top-left), used to normalise positions.
@@ -33,9 +36,23 @@ final class MetadataRecorder: @unchecked Sendable {
         timer.schedule(deadline: .now(), repeating: 1.0 / 120, leeway: .milliseconds(2))
         timer.setEventHandler { [weak self] in self?.poll() }
         timer.resume()
+
+        shapeTimer.schedule(deadline: .now(), repeating: 1.0 / 15, leeway: .milliseconds(10))
+        shapeTimer.setEventHandler { [weak self] in
+            let shape = MainActor.assumeIsolated { CursorShape.current }
+            self?.queue.async { self?.record(shape) }
+        }
+        shapeTimer.resume()
+    }
+
+    private func record(_ shape: CursorShape) {
+        guard shape != lastShape, let time = clock.position(for: SessionClock.hostNow)?.seconds, let point = cursor() else { return }
+        lastShape = shape
+        write(RecordedEvent(t: time, kind: .cursor, x: point.x, y: point.y, shape: shape))
     }
 
     func stop() {
+        shapeTimer.cancel()
         timer.cancel()
         queue.sync {
             flush()
@@ -96,5 +113,29 @@ final class MetadataRecorder: @unchecked Sendable {
         guard !pending.isEmpty else { return }
         try? handle.write(contentsOf: Data(pending.utf8))
         pending = ""
+    }
+}
+
+extension CursorShape {
+    @MainActor var cursor: NSCursor {
+        switch self {
+        case .arrow: .arrow
+        case .iBeam: .iBeam
+        case .pointingHand: .pointingHand
+        case .crosshair: .crosshair
+        case .openHand: .openHand
+        case .closedHand: .closedHand
+        case .resizeLeftRight: .resizeLeftRight
+        case .resizeUpDown: .resizeUpDown
+        }
+    }
+
+    /// The system doesn't say which cursor is showing, only what it looks like, so the current
+    /// one is matched to the standard cursors by size and hot spot. Anything else counts as the arrow.
+    @MainActor static var current: CursorShape {
+        guard let system = NSCursor.currentSystem else { return .arrow }
+        return allCases.first {
+            $0.cursor.hotSpot == system.hotSpot && $0.cursor.image.size == system.image.size
+        } ?? .arrow
     }
 }

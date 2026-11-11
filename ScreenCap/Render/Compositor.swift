@@ -3,6 +3,13 @@ import CoreImage
 import CoreImage.CIFilterBuiltins
 import ScreenCapCore
 
+/// A cursor picture with its size and hot spot in screen points.
+struct CursorArt {
+    let image: CIImage
+    let size: CGSize
+    let hotSpot: CGPoint
+}
+
 /// Everything needed to draw any frame, frozen at the moment of an edit. The editor builds a
 /// new one for each change and the exporter builds one for the export, so preview and export
 /// go through exactly the same drawing code.
@@ -13,26 +20,21 @@ final class RenderState: @unchecked Sendable {
     let zoomPath: ZoomPath
     /// Cursor path with the user's smoothing already applied.
     let cursor: CursorTrack
-    let cursorImage: CIImage?
-    /// Cursor image size and hot spot, in screen points.
-    let cursorSize: CGSize
-    let cursorHotSpot: CGPoint
+    let cursors: [CursorShape: CursorArt]
     /// Editor only: draw unzoomed so the framing rectangle of the selected zoom makes sense.
     let showsFullFrame: Bool
     let screenTrack: CMPersistentTrackID
     let cameraTrack: CMPersistentTrackID?
 
     init(timeline: Timeline, edits: EditDecisions, info: ProjectInfo, zoomPath: ZoomPath, cursor: CursorTrack,
-         cursorImage: CIImage?, cursorSize: CGSize, cursorHotSpot: CGPoint, showsFullFrame: Bool,
+         cursors: [CursorShape: CursorArt], showsFullFrame: Bool,
          screenTrack: CMPersistentTrackID, cameraTrack: CMPersistentTrackID?) {
         self.timeline = timeline
         self.edits = edits
         self.info = info
         self.zoomPath = zoomPath
         self.cursor = cursor
-        self.cursorImage = cursorImage
-        self.cursorSize = cursorSize
-        self.cursorHotSpot = cursorHotSpot
+        self.cursors = cursors
         self.showsFullFrame = showsFullFrame
         self.screenTrack = screenTrack
         self.cameraTrack = cameraTrack
@@ -183,11 +185,13 @@ final class Compositor: NSObject, AVVideoCompositing, @unchecked Sendable {
                     }
                 }
             }
-            if let image = state.cursorImage, let position = state.cursor.position(at: time),
+            if let art = state.cursors[state.cursor.shape(at: time)] ?? state.cursors[.arrow],
+               let position = state.cursor.position(at: time),
                (-0.05...1.05).contains(position.x), (-0.05...1.05).contains(position.y) {
-                let scale = state.cursorSize.width * pointScale * CGFloat(style.scale) / image.extent.width
-                let hotSpot = CGPoint(x: state.cursorHotSpot.x * pointScale * CGFloat(style.scale),
-                                      y: state.cursorHotSpot.y * pointScale * CGFloat(style.scale))
+                let image = art.image
+                let scale = art.size.width * pointScale * CGFloat(style.scale) / image.extent.width
+                let hotSpot = CGPoint(x: art.hotSpot.x * pointScale * CGFloat(style.scale),
+                                      y: art.hotSpot.y * pointScale * CGFloat(style.scale))
                 let x = position.x * size.width - hotSpot.x
                 let top = (1 - position.y) * size.height + hotSpot.y
                 screen = image.transformed(by: CGAffineTransform(scaleX: scale, y: scale))

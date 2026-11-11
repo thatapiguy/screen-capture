@@ -1,6 +1,7 @@
 import AVFoundation
 import SwiftUI
 import ScreenCapCore
+import UniformTypeIdentifiers
 
 /// The single editor window: preview and inspector on top, transport and timeline below.
 struct EditorView: View {
@@ -61,6 +62,8 @@ struct EditorView: View {
             Menu {
                 Button("Trim Start to Playhead") { model.trimStartToPlayhead() }.keyboardShortcut("[", modifiers: [])
                 Button("Trim End to Playhead") { model.trimEndToPlayhead() }.keyboardShortcut("]", modifiers: [])
+                Button("Remove Silences") { model.removeSilences() }
+                    .disabled(!model.canRemoveSilences)
                 Divider()
                 Button("Restore Removed Sections") { model.restoreRemovedSections() }.disabled(!model.hasRemovedSections)
             } label: {
@@ -216,12 +219,20 @@ struct ExportSheet: View {
     @AppStorage("export.resolution") private var resolution = ExportSettings.Resolution.source
     @AppStorage("export.fps") private var fps = 60
     @AppStorage("export.quality") private var quality = ExportSettings.Quality.balanced
+    @AppStorage("export.gifResolution") private var gifResolution = ExportSettings.Resolution.p720
+    @AppStorage("export.gifFPS") private var gifFPS = 15
+
+    private var isGIF: Bool { codec == .gif }
+
+    private var gifTooLong: Bool {
+        isGIF && model.timeline.duration * Double(gifFPS) > Double(ExportSettings.maxGIFFrames)
+    }
 
     private var settings: ExportSettings {
         var settings = ExportSettings()
         settings.codec = codec
-        settings.resolution = resolution
-        settings.fps = fps
+        settings.resolution = isGIF ? gifResolution : resolution
+        settings.fps = isGIF ? gifFPS : fps
         settings.quality = quality
         return settings
     }
@@ -237,9 +248,17 @@ struct ExportSheet: View {
                     Button("Cancel") { model.cancelExport() }.keyboardShortcut(.cancelAction)
                 }
             case .done(let url):
-                Label("Saved \(url.lastPathComponent)", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+                Label("Saved \(url.lastPathComponent)", systemImage: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                    .onDrag { NSItemProvider(contentsOf: url) ?? NSItemProvider() }
+                    .help("Drag this into another app")
                 HStack {
                     Spacer()
+                    Button("Copy") {
+                        // Copies the file itself, so it pastes into chats, mail and documents.
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.writeObjects([url as NSURL])
+                    }
                     Button("Reveal in Finder") { NSWorkspace.shared.activateFileViewerSelecting([url]) }
                     Button("Done") { close() }.keyboardShortcut(.defaultAction)
                 }
@@ -251,7 +270,7 @@ struct ExportSheet: View {
                 HStack {
                     Spacer()
                     Button("Cancel") { close() }.keyboardShortcut(.cancelAction)
-                    Button("Export…") { chooseDestination() }.keyboardShortcut(.defaultAction)
+                    Button("Export…") { chooseDestination() }.keyboardShortcut(.defaultAction).disabled(gifTooLong)
                 }
             }
         }
@@ -264,34 +283,57 @@ struct ExportSheet: View {
             Picker("Format", selection: $codec) {
                 Text("H.264 (most compatible)").tag(ExportSettings.Codec.h264)
                 Text("HEVC (smaller files)").tag(ExportSettings.Codec.hevc)
+                Text("Animated GIF").tag(ExportSettings.Codec.gif)
             }
-            Picker("Resolution", selection: $resolution) {
-                Text("1080p").tag(ExportSettings.Resolution.p1080)
-                Text("1440p").tag(ExportSettings.Resolution.p1440)
-                Text("4K").tag(ExportSettings.Resolution.p2160)
-                Text("Source size").tag(ExportSettings.Resolution.source)
-            }
-            Picker("Frame rate", selection: $fps) {
-                Text("30 fps").tag(30)
-                Text("60 fps").tag(60)
-            }
-            Picker("Quality", selection: $quality) {
-                Text("Small").tag(ExportSettings.Quality.small)
-                Text("Balanced").tag(ExportSettings.Quality.balanced)
-                Text("High").tag(ExportSettings.Quality.high)
+            if isGIF {
+                Picker("Resolution", selection: $gifResolution) {
+                    Text("480p").tag(ExportSettings.Resolution.p480)
+                    Text("720p").tag(ExportSettings.Resolution.p720)
+                    Text("1080p").tag(ExportSettings.Resolution.p1080)
+                }
+                Picker("Frame rate", selection: $gifFPS) {
+                    Text("10 fps").tag(10)
+                    Text("15 fps").tag(15)
+                    Text("20 fps").tag(20)
+                }
+                if gifTooLong {
+                    Text("GIFs are limited to about \(ExportSettings.maxGIFFrames / gifFPS) seconds at this frame rate. Trim the recording or lower the frame rate.")
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
+            } else {
+                Picker("Resolution", selection: $resolution) {
+                    Text("1080p").tag(ExportSettings.Resolution.p1080)
+                    Text("1440p").tag(ExportSettings.Resolution.p1440)
+                    Text("4K").tag(ExportSettings.Resolution.p2160)
+                    Text("Source size").tag(ExportSettings.Resolution.source)
+                }
+                Picker("Frame rate", selection: $fps) {
+                    Text("30 fps").tag(30)
+                    Text("60 fps").tag(60)
+                }
+                Picker("Quality", selection: $quality) {
+                    Text("Small").tag(ExportSettings.Quality.small)
+                    Text("Balanced").tag(ExportSettings.Quality.balanced)
+                    Text("High").tag(ExportSettings.Quality.high)
+                }
             }
             if let info = model.info {
                 let size = settings.renderSize(source: CGSize(width: info.width, height: info.height))
-                let megabytes = Double(settings.videoBitrate(size: size) + 192_000) / 8 * model.timeline.duration / 1_000_000
-                LabeledContent("Output", value: "\(Int(size.width)) × \(Int(size.height)), about \(Int(megabytes.rounded())) MB")
+                if isGIF {
+                    LabeledContent("Output", value: "\(Int(size.width)) × \(Int(size.height))")
+                } else {
+                    let megabytes = Double(settings.videoBitrate(size: size) + 192_000) / 8 * model.timeline.duration / 1_000_000
+                    LabeledContent("Output", value: "\(Int(size.width)) × \(Int(size.height)), about \(Int(megabytes.rounded())) MB")
+                }
             }
         }
     }
 
     private func chooseDestination() {
         let panel = NSSavePanel()
-        panel.allowedContentTypes = [.mpeg4Movie]
-        panel.nameFieldStringValue = model.bundle.name + ".mp4"
+        panel.allowedContentTypes = [isGIF ? .gif : .mpeg4Movie]
+        panel.nameFieldStringValue = model.bundle.name + (isGIF ? ".gif" : ".mp4")
         if panel.runModal() == .OK, let url = panel.url {
             model.export(settings, to: url)
         }
